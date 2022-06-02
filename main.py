@@ -10,9 +10,7 @@ date = '2022-01-01'
 
 def get_trip_measures():
     """
-    Retrieves the dataframes for the measures of each device, and the set of devices reporting
-    measures, both in the previous week, from the db.
-    :return: a dataframe with the measures, and another dataframe with those devices actively reporting.
+    Retrieves a dataframe with the information of each trip done by each vehicle grouped by date.
     """
     trips_file_name = 'trip_events.csv'
     trips_columns = ['accountId', 'unitId', 'deviceId', 'date1', 'travel_time', 'idle_time',
@@ -34,15 +32,10 @@ def get_trip_measures():
 
 def get_behavior_events():
     """
-    Retrieves the dataframes for the measures of each device, and the set of devices reporting
-    measures, both in the previous week, from the db.
-    :return: a dataframe with the measures, and another dataframe with those devices actively reporting.
+    Retrieves a dataframe with the information of each behavior event done by each vehicle grouped by date.
     """
     behavior_events_file_name = 'behavior_events.csv'
-    behavior_events_columns = ['accountId', 'deviceId', 'date', 'ECUSpeedOver', 'ECUSpeedOverPosted',
-                               'EngineOffTime', 'EngineOnTime', 'HardBrake', 'HardTurn', 'IdleTime',
-                               'RapidAcceleration', 'SpeedOver', 'SpeedOverPosted', 'StopTime',
-                               'SuddenStop', 'TravelTime']
+    behavior_events_columns = ['accountId', 'unitId', 'metric', 'date', 'total_events']
     behavior_events_query = 'select accountId,unitId,metric,date,sum(events) as total_events from ' \
                             f'behavior_events_iot where date>{date} group by accountId,unitId,metric,date ' \
                             'order by date desc;'
@@ -69,5 +62,5 @@ if __name__ == '__main__':
 
     today = datetime.date.today()
 
-    upload_df_to_s3(global_df, f'global_data_2022-05-30.csv')
-    upload_success_to_s3(f'success_2022-05-30.txt')
+    upload_df_to_s3(global_df, f'global_data_{today}.csv')
+    upload_success_to_s3(f'success_{today}.txt')

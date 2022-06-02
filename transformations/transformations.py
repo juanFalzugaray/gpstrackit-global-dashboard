@@ -3,6 +3,11 @@ from datetime import datetime
 
 
 def transform_behavior_events(dataframe):
+    """
+    Unstack the dataframe to obtain one row per vehicle per day with all the data.
+    :param dataframe: name of the dataframe.
+    :return: returns the dataframe unstacked.
+    """
     df_trans = dataframe.set_index(['accountId', 'unitId', 'date', 'metric']).unstack('metric').fillna(0)
     df_trans.columns = df_trans.columns.levels[1].rename(None)
     df_trans = df_trans.reset_index()
@@ -15,12 +20,23 @@ def transform_behavior_events(dataframe):
 
 
 def fix_trip_columns(dataframe):
+    """
+    Transforms the columns of deviceId and accountId to string.
+    :param dataframe: name of the dataframe.
+    :return: transformed dataframe.
+    """
     dataframe['deviceId'] = dataframe['deviceId'].astype(str)
     dataframe['accountId'] = dataframe['accountId'].astype(str)
     return dataframe
 
 
 def merge_data(df_behaviors, df_trips):
+    """
+    Merges the two dataframes inputted.
+    :param df_behaviors: name of the dataframe with all the behavior events.
+    :param df_trips: name of the dataframe with all trips.
+    :return: merged dataframe.
+    """
     df_cd = pd.merge(df_behaviors, df_trips, how='outer', left_on=['deviceId', 'date', 'accountId'],
                      right_on=['deviceId', 'date1', 'accountId'])
 
@@ -56,12 +72,23 @@ def merge_data(df_behaviors, df_trips):
 
 
 def unique_devices_dict(dataframe):
+    """
+    Creates a dictionary that has the device ids as keys and unit ids as values.
+    :param dataframe: name of the dataframe.
+    :return: dictionary.
+    """
     df_dev = dataframe.groupby(['unitId', 'deviceId']).size().reset_index().rename(columns={0: 'count'})
     dev_dict = dict(zip(df_dev.deviceId, df_dev.unitId))
     return dev_dict
 
 
 def add_unit_id(dev_id, dev_dict):
+    """
+    Adds the unit id to those rows that do not contain one.
+    :param dev_id: device id of the row.
+    :param dev_dict: dictionary to pair the device id to a unit id.
+    :return: corresponding unit id.
+    """
     try:
         return dev_dict[int(dev_id)]
     except:
@@ -69,6 +96,11 @@ def add_unit_id(dev_id, dev_dict):
 
 
 def add_industry(dataframe):
+    """
+    Adds the industry to which the corresponding device belongs.
+    :param dataframe: name of dataframe.
+    :return: dataframe with new column category.
+    """
     file_name = 'accountList.csv'
     df_category = pd.read_csv(file_name, sep=',', encoding='cp1252')
     id_category_df = df_category[['Account ID', 'Lead Industry Category']]
@@ -79,6 +111,12 @@ def add_industry(dataframe):
 
 
 def define_industry(account_id, df_category_id):
+    """
+    Defines the industry of the corresponding device.
+    :param account_id: account id of the device.
+    :param df_category_id: dataframe with all the account ids and their industry.
+    :return: category of the device.
+    """
     try:
         category = df_category_id[df_category_id['Account ID'] == float(account_id)]['Lead Industry Category'].iloc[0]
 
@@ -91,6 +129,11 @@ def define_industry(account_id, df_category_id):
 
 
 def eliminate_anomalies(dataframe):
+    """
+    Eliminates from the dataframe those trips that have anomalous distances covered.
+    :param dataframe: name of the dataframe.
+    :return: filtered dataframe.
+    """
     filter_df = dataframe['total_distance'] < 5000
     dataframe = dataframe[filter_df]
     return dataframe
