@@ -4,7 +4,7 @@ import boto3
 
 from utils.file_management import create_csv, read_dataframe_from_file
 
-# client = boto3.client('rds', region_name=os.environ['REGION'])
+client = boto3.client('rds', region_name=os.environ['REGION'])
 
 
 def query_db(file_name, df_columns, query):

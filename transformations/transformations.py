@@ -97,7 +97,7 @@ def add_unit_id(dev_id, dev_dict):
 
 def add_industry(dataframe):
     """
-    Adds the industry to which the corresponding device belongs.
+    Adds the industry for each trip according to the corresponding device that made the trip.
     :param dataframe: name of dataframe.
     :return: dataframe with new column category.
     """

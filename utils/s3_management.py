@@ -15,8 +15,7 @@ def upload_df_to_s3(df_to_upload, file_name):
     :param df_to_upload: df to upload to s3.
     :param file_name: name of the file to upload to s3.
     """
-    # bucket_name = os.environ['BUCKET_NAME']
-    bucket_name = 'gpstrackit-trip-data'
+    bucket_name = os.environ['BUCKET_NAME']
     s3_key = f'{folder_name}/{file_name}'
     df_to_upload.to_csv(file_name, index=False)
     s3.upload_file(file_name, bucket_name, s3_key)
@@ -31,8 +30,7 @@ def upload_success_to_s3(file_name):
     have finished uploading.
     :param file_name: name of the file to upload to s3.
     """
-    # bucket_name = os.environ['BUCKET_NAME']
-    bucket_name = 'gpstrackit-trip-data'
+    bucket_name = os.environ['BUCKET_NAME']
     s3_key = f'{folder_name}/{file_name}'
     txt = open(file_name, 'x')
     txt.close()

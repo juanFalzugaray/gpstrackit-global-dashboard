@@ -46,12 +46,8 @@ def get_behavior_events():
 
 
 if __name__ == '__main__':
-    # trip_measures_df = get_trip_measures()
-    # behavior_events_df = get_behavior_events()
-    file_name = 'global_beh_events.csv'
-    behavior_events_df = pd.read_csv(file_name, sep='\t', encoding='cp1252')
-    file_name = 'global_metrics_filtered.csv'
-    trip_measures_df = pd.read_csv(file_name, sep='\t', encoding='cp1252')
+    trip_measures_df = get_trip_measures()
+    behavior_events_df = get_behavior_events()
 
     trip_measures_df = fix_trip_columns(trip_measures_df)
     behavior_events_df = transform_behavior_events(behavior_events_df)
