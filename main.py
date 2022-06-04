@@ -5,7 +5,7 @@ from utils.s3_management import upload_success_to_s3, upload_df_to_s3
 from utils.db_query import query_db
 from transformations.transformations import transform_behavior_events, fix_trip_columns, merge_data, add_industry, eliminate_anomalies
 
-date = '2022-01-01'
+date = '2022-06-02'
 
 
 def get_trip_measures():
