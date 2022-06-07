@@ -8,6 +8,7 @@ def transform_behavior_events(dataframe):
     :param dataframe: name of the dataframe.
     :return: returns the dataframe unstacked.
     """
+    df_columns = list(dataframe.metric.unique())
     df_trans = dataframe.set_index(['accountId', 'unitId', 'date', 'metric']).unstack('metric').fillna(0)
     df_trans.columns = df_trans.columns.levels[1].rename(None)
     df_trans = df_trans.reset_index()
@@ -16,7 +17,7 @@ def transform_behavior_events(dataframe):
     df_trans['deviceId'] = df_trans['deviceId'].astype(str)
     df_trans['accountId'] = df_trans['accountId'].astype(str)
 
-    return df_trans
+    return df_trans, df_columns
 
 
 def fix_trip_columns(dataframe):
@@ -30,7 +31,7 @@ def fix_trip_columns(dataframe):
     return dataframe
 
 
-def merge_data(df_behaviors, df_trips):
+def merge_data(df_behaviors, df_trips, columns):
     """
     Merges the two dataframes inputted.
     :param df_behaviors: name of the dataframe with all the behavior events.
@@ -50,6 +51,9 @@ def merge_data(df_behaviors, df_trips):
     dev_dict = unique_devices_dict(df_trips)
 
     df_cd['unitId'] = df_cd.apply(lambda row: add_unit_id(row['deviceId'], dev_dict), axis=1)
+
+    for column in columns:
+        df_cd[column] = df_cd[column].fillna(0)
 
     df_cd = df_cd.rename({'IdleTime': 'number_of_idlings',
                           'StopTime': 'number_of_stops_events',
@@ -78,6 +82,7 @@ def unique_devices_dict(dataframe):
     :return: dictionary.
     """
     df_dev = dataframe.groupby(['unitId', 'deviceId']).size().reset_index().rename(columns={0: 'count'})
+
     dev_dict = dict(zip(df_dev.deviceId, df_dev.unitId))
     return dev_dict
 
@@ -90,7 +95,7 @@ def add_unit_id(dev_id, dev_dict):
     :return: corresponding unit id.
     """
     try:
-        return dev_dict[int(dev_id)]
+        return dev_dict[dev_id]
     except:
         return 'no unit Id'
 
@@ -134,6 +139,6 @@ def eliminate_anomalies(dataframe):
     :param dataframe: name of the dataframe.
     :return: filtered dataframe.
     """
-    filter_df = dataframe['total_distance'] < 5000
+    filter_df = dataframe['total_distance'] < 2000
     dataframe = dataframe[filter_df]
     return dataframe

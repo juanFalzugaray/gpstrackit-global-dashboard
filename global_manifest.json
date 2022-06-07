@@ -2,7 +2,7 @@
     "fileLocations": [
         {
             "URIs": [
-                "s3://gpstrackit-trip-data/internal_dashboard_data/global_data_2022-05-30.csv"
+                "s3://proactive-data-analytics/internal_dashboard_data/global_data.csv"
             ]
         }
     ],

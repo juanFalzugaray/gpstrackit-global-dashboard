@@ -1,6 +1,7 @@
 import os
 import mysql.connector
 import boto3
+import logging
 
 from utils.file_management import create_csv, read_dataframe_from_file
 
@@ -19,9 +20,17 @@ def query_db(file_name, df_columns, query):
     db_cursor = gps_trackit_db.cursor()
 
     db_cursor.execute(query)
+    logging.warning('query was executed')
+
     rows = db_cursor.fetchall()
+    logging.warning('query ran correctly and data was fetched')
+
     create_csv(file_name, rows)
+    logging.warning('csv created')
+
     dataframe_result = read_dataframe_from_file(file_name, df_columns)
+    logging.warning('dataframe read from file')
+
     os.remove(file_name)
 
     return dataframe_result

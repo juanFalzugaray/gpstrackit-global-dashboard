@@ -1,11 +1,12 @@
 import datetime
-import pandas as pd
+import logging
 
 from utils.s3_management import upload_success_to_s3, upload_df_to_s3
 from utils.db_query import query_db
-from transformations.transformations import transform_behavior_events, fix_trip_columns, merge_data, add_industry, eliminate_anomalies
+from transformations.transformations import transform_behavior_events, fix_trip_columns, merge_data, add_industry, \
+                                            eliminate_anomalies
 
-date = '2022-06-02'
+limit_date = datetime.datetime.strptime('1 jan 2019', '%d %b %Y')
 
 
 def get_trip_measures():
@@ -21,8 +22,8 @@ def get_trip_measures():
                   " avg(averageSpeed) as avg_speed,max(maxSpeed) as max_speed," \
                   " sum(numberOfIdles) as number_of_idles, sum(numberOfStops) as number_of_stops," \
                   " sum(engineOff) as engine_off, sum(engineOn) as engine_on" \
-                  f" from trip_summary where date(tripStartUnittime)>{date} and distance IS NOT NULL " \
-                  "and distance>=0 group by accountId,unitId,date(tripStartUnittime) " \
+                  f" from trip_summary where date(tripStartUnittime)>'{limit_date}' and distance IS NOT NULL and " \
+                  f"distance>=0 group by accountId,unitId,date(tripStartUnittime) " \
                   "order by date(tripStartUnittime) desc;"
 
     measures = query_db(trips_file_name, trips_columns, trips_query)
@@ -36,9 +37,16 @@ def get_behavior_events():
     """
     behavior_events_file_name = 'behavior_events.csv'
     behavior_events_columns = ['accountId', 'unitId', 'metric', 'date', 'total_events']
-    behavior_events_query = 'select accountId,unitId,metric,date,sum(events) as total_events from ' \
-                            f'behavior_events_iot where date>{date} group by accountId,unitId,metric,date ' \
-                            'order by date desc;'
+
+    metric1 = "SpeedOverPosted"
+    metric2 = "ECUSpeedOverPosted"
+    metric3 = "SpeedOver"
+    metric4 = "ECUSpeedOver"
+
+    metrics = (metric1, metric2, metric3, metric4)
+    behavior_events_query = f"select accountId,unitId,metric,date,sum(events) as total_events " \
+                            f"from behavior_events_iot where date>'{limit_date}' and metric in {metrics} " \
+                            f"group by accountId,unitId,metric,date order by date desc;"
 
     measures = query_db(behavior_events_file_name, behavior_events_columns, behavior_events_query)
 
@@ -46,17 +54,32 @@ def get_behavior_events():
 
 
 if __name__ == '__main__':
+    logging.warning('started to run')
+
     trip_measures_df = get_trip_measures()
+    logging.warning('loaded trip measures')
+
     behavior_events_df = get_behavior_events()
+    logging.warning('loaded behavior events')
 
     trip_measures_df = fix_trip_columns(trip_measures_df)
-    behavior_events_df = transform_behavior_events(behavior_events_df)
+    logging.warning('fixed trip measures')
 
-    global_df = merge_data(behavior_events_df, trip_measures_df)
+    trip_measures_df = eliminate_anomalies(trip_measures_df)
+    logging.warning('eliminated anomalies')
+
+    behavior_events_df, beh_columns = transform_behavior_events(behavior_events_df)
+    logging.warning('transformed behavior events')
+
+    global_df = merge_data(behavior_events_df, trip_measures_df, beh_columns)
+    logging.warning('merged data')
+
     global_df = add_industry(global_df)
-    global_df = eliminate_anomalies(global_df)
+    logging.warning('added industry')
 
     today = datetime.date.today()
+    upload_df_to_s3(global_df, f'global_data.csv')
+    logging.warning('saved df in s3')
 
-    upload_df_to_s3(global_df, f'global_data_{today}.csv')
     upload_success_to_s3(f'success_{today}.txt')
+    logging.warning('saved success in s3')
